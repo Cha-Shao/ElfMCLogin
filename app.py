@@ -3,7 +3,7 @@ from flask import Flask, session, request
 from flask_cors import CORS
 from ruamel import yaml
 from hashlib import sha256
-import os, sys, pymysql
+import os, sys, pymysql, re
 
 folder = os.path.dirname(os.path.realpath(sys.argv[0]))
 yamlPath = os.path.join(folder,'mysqlConfigs.yaml')
@@ -34,6 +34,10 @@ def login():
 
     if inputUser == None:
         return {'code': -1, 'msg': '参数不合法'}
+    if len(re.findall("(?:')|(?:--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\\b(select|update|union|and|or|delete|insert|trancate|char|into|substr|ascii|declare|exec|count|master|into|drop|execute)\\b)", inputUser)) != 0:
+        return {'code': -500, 'msg': '非法字符'}
+    else:
+        pass
     try:
         mysqlConfigs = pymysql.connect(
             # mysql配置
@@ -49,6 +53,7 @@ def login():
         command = 'SELECT * FROM '+configData['mysqlConfigs']['db']+' WHERE realname=%s'
         checkName = [inputUser]
         print('')
+        print(inputUser, inputPassword)
         print(command, checkName)
         print('')
         cursor.execute(command, checkName)
